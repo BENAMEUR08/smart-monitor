@@ -1,89 +1,171 @@
 <!DOCTYPE html>
-
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تسجيل الدخول</title>
+
+<title>Smart Poultry Monitor</title>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI', sans-serif;
+}
+
 body{
-  font-family: Arial;
+  background:#0f172a;
+  color:#fff;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
-  background:#1e3c72;
 }
 
-.box{
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-  width:280px;
+/* Container */
+.container{
+  width:100%;
+  max-width:380px;
+  padding:20px;
+}
+
+/* Header */
+.header{
   text-align:center;
+  margin-bottom:40px;
+}
+
+.header i{
+  font-size:50px;
+  color:#38bdf8;
+  margin-bottom:10px;
+}
+
+.header h2{
+  font-weight:bold;
+}
+
+.header p{
+  color:#94a3b8;
+  font-size:14px;
+}
+
+/* Form Inputs */
+.input-group{
+  margin-bottom:20px;
+  position:relative;
+}
+
+.input-group i{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  right:15px;
+  color:#94a3b8;
 }
 
 input{
   width:100%;
-  padding:10px;
-  margin:10px 0;
-  border:1px solid #ccc;
-  border-radius:5px;
+  padding:14px 45px 14px 10px;
+  border:none;
+  border-radius:12px;
+  background:#1e293b;
+  color:#fff;
+  font-size:14px;
 }
 
+input:focus{
+  outline:none;
+  background:#334155;
+}
+
+/* Button */
 button{
   width:100%;
-  padding:10px;
-  background:#007bff;
-  color:#fff;
+  padding:14px;
   border:none;
-  border-radius:5px;
+  border-radius:12px;
+  background:#38bdf8;
+  color:#000;
+  font-size:16px;
+  font-weight:bold;
   cursor:pointer;
+  transition:0.3s;
 }
 
+button:hover{
+  background:#0ea5e9;
+}
+
+/* Message */
 #msg{
-  color:red;
-  margin-top:10px;
+  text-align:center;
+  margin-top:15px;
+  color:#f87171;
+  font-size:14px;
 }
 </style>
 
 </head>
-
 <body>
 
-<div class="box">
-  <h2>تسجيل الدخول</h2>
+<div class="container">
 
-  <input id="username" type="text" placeholder="اسم المستخدم">
-  <input id="password" type="password" placeholder="كلمة المرور">
+  <div class="header">
+    <i class="fas fa-drumstick-bite"></i>
+    <h2>Smart Poultry</h2>
+    <p>Poultry Farm Monitoring System</p>
+  </div>
 
-<button onclick="login()">دخول</button>
+  <div class="input-group">
+    <i class="fas fa-user"></i>
+    <input id="username" type="text" placeholder="Username">
+  </div>
+
+  <div class="input-group">
+    <i class="fas fa-lock"></i>
+    <input id="password" type="password" placeholder="Password">
+  </div>
+
+  <button onclick="login()">Login</button>
 
   <p id="msg"></p>
+
 </div>
 
 <script>
 async function login(){
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
+  const msg = document.getElementById("msg");
 
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+  msg.innerText = "";
 
-  const data = await res.json();
+  try{
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-  if(res.ok){
-    if(data.role === "admin"){
-      window.location.href = "/admin";
+    const data = await res.json();
+
+    if(res.ok){
+      if(data.role === "admin"){
+        window.location.href = "/admin";
+      }else{
+        window.location.href = "/index";
+      }
     }else{
-      window.location.href = "/index";
+      msg.innerText = data.error || "Login failed";
     }
-  }else{
-    document.getElementById("msg").innerText = data.error || "خطأ";
+
+  }catch(err){
+    msg.innerText = "Server connection error";
   }
 }
 </script>
