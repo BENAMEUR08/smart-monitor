@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Monitor Pro</title>
+
+<!-- Socket.io -->
+<script src="/socket.io/socket.io.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI', Arial;}
+body{background:linear-gradient(135deg,#1e3c72,#2a5298);display:flex;justify-content:center;align-items:center;height:100vh;}
+.app{width:380px;height:680px;background:#f4f6f9;border-radius:30px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.5);display:flex;flex-direction:column;}
+.header{background:linear-gradient(135deg,#007bff,#00c6ff);color:white;padding:20px;text-align:center;font-size:22px;font-weight:bold;}
+.content{flex:1;padding:15px;overflow-y:auto;}
+.card{background:white;padding:15px;margin-bottom:12px;border-radius:15px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.value{font-size:22px;font-weight:bold;margin-top:5px;}
+.status{font-size:18px;font-weight:bold;}
+.fire-on{background:red;color:white;padding:10px;border-radius:10px;}
+.fire-off{background:green;color:white;padding:10px;border-radius:10px;}
+.water-on{background:#0099ff;color:white;padding:10px;border-radius:10px;}
+.water-off{background:gray;color:white;padding:10px;border-radius:10px;}
+.alert{padding:10px;background:red;color:white;border-radius:10px;margin-bottom:10px;display:none;}
+input{width:70px;padding:5px;margin:3px;text-align:center;border-radius:5px;border:1px solid #ccc;}
+button{width:100%;padding:10px;border:none;border-radius:10px;background:#007bff;color:white;font-size:16px;margin-top:10px;cursor:pointer;}
+canvas{background:white;border-radius:10px;}
+.limits-display{background:#eef3ff;border:2px solid #007bff;border-radius:12px;padding:10px;margin-bottom:10px;}
+.limits-display div{display:flex;justify-content:space-between;margin:4px 0;font-size:15px;font-weight:bold;}
+.limits-input{background:#fff7e6;border:2px solid #ff9800;border-radius:12px;padding:10px;}
+.limits-title{font-weight:bold;margin-bottom:5px;font-size:16px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+  <button onclick="logout()" style="
+    padding:6px 12px;
+    border:none;
+    border-radius:8px;
+    background:#ff4d4d;
+    color:white;
+    cursor:pointer;
+    font-size:14px;
+  ">
+    خروج
+  </button>
+</div>
+  <div class="content">
+    <div id="alertBox" class="alert"></div>
+
+    <div class="card">درجة الحرارة<div id="temp" class="value">--</div></div>
+    <div class="card">الرطوبة<div id="hum" class="value">--</div></div>
+    <div class="card">الإنارة<div id="lux" class="value">--</div></div>
+    <div class="card">المروحة<div id="fan" class="status">--</div></div>
+    <div class="card">السخان<div id="heater" class="status">--</div></div>
+    <div class="card">الحريق<div id="fire" class="fire-off">--</div></div>
+    <div class="card">مرشة الماء<div id="water" class="water-off">--</div></div>
+
+    <div class="card">📊 الرسم البياني<canvas id="chart"></canvas></div>
+
+    <div class="card">
+      <div class="limits-title">📊 الحدود الحالية</div>
+      <div class="limits-display">
+        <div><span>🌡 الحرارة</span><span id="tempLimits">--</span></div>
+        <div><span>💧 الرطوبة</span><span id="humLimits">--</span></div>
+        <div><span>💡 الإنارة</span><span id="luxLimits">--</span></div>
+      </div>
+
+      <div class="limits-title">⚙️ إدخال حدود جديدة</div>
+      <div class="limits-input">
+        حرارة Min <input id="tempMin" type="number" value="21">
+        حرارة Max <input id="tempMax" type="number" value="28"><br>
+        رطوبة Min <input id="humMin" type="number" value="40">
+        رطوبة Max <input id="humMax" type="number" value="70"><br>
+        Lux Min <input id="luxMin" type="number" value="15">
+        Lux Max <input id="luxMax" type="number" value="120"><br>
+        <button onclick="sendLimits()">إرسال الحدود</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/script.js"></script>
+</body>
+</html>
