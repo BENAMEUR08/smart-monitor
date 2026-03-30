@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>👀 مشاهدة المزرعة</title>
+
+<style>
+body {
+  text-align:center;
+  font-family: Arial;
+  background:#111;
+  color:white;
+}
+video {
+  width:80%;
+  margin-top:20px;
+  border-radius:15px;
+  background:black;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>👀 مشاهدة مباشرة للمزرعة</h2>
+
+<video id="remoteVideo" autoplay playsinline muted></video>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+// 👇 مهم: إعلام السيرفر بوجود مشاهد
+socket.emit("viewer-joined");
+
+const remoteVideo = document.getElementById("remoteVideo");
+
+// إعداد WebRTC
+const pc = new RTCPeerConnection({
+  iceServers: [
+  { urls: "stun:stun.l.google.com:19302" },
+
+  {
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject"
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject"
+  }
+]
+});
+
+// استقبال الفيديو
+pc.ontrack = (event) => {
+  console.log("📡 تم استقبال الفيديو");
+
+  const stream = event.streams[0];
+  remoteVideo.srcObject = stream;
+
+  // 👇 تشغيل إجباري (حل الشاشة السوداء)
+  remoteVideo.play().then(() => {
+    console.log("✅ الفيديو يعمل");
+  }).catch(err => {
+    console.log("⚠️ Autoplay مشكلة:", err);
+  });
+};
+
+// إرسال ICE
+pc.onicecandidate = (event) => {
+  if (event.candidate) {
+    socket.emit("ice-candidate", event.candidate);
+  }
+};
+
+// استقبال offer
+socket.on("offer", async (offer) => {
+  console.log("📩 تم استقبال offer");
+
+  await pc.setRemoteDescription(offer);
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  socket.emit("answer", pc.localDescription);
+});
+
+// استقبال ICE
+socket.on("ice-candidate", async (candidate) => {
+  try {
+    await pc.addIceCandidate(candidate);
+  } catch (e) {
+    console.error("❌ خطأ ICE:", e);
+  }
+});
+</script>
+
+</body>
+</html>

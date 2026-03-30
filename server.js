@@ -73,6 +73,19 @@ app.get("/admin", protectPage("admin"), async (req, res) => {
   }
 });
 
+// ---- Live Camera Streaming ----
+
+// صفحة صاحب المزرعة
+app.get("/camera", (req,res)=>{
+  res.render("camera-sender", { user: req.user }); // تمرير معلومات المستخدم إذا أردت
+});
+
+// صفحة المشاهدة
+app.get("/view",protectPage("user"), (req,res)=>{
+  res.render("camera-viewer", { user: req.user });
+});
+// ---- WebRTC Signaling ----
+
 // صفحة تسجيل الدخول
 app.get("/", (req,res)=>{
   res.render("login");
@@ -170,8 +183,16 @@ mqttClient.on("message", (topic,message)=>{
 });
 
 // ---- Socket.io ----
-io.on("connection", socket=>{
-  socket.on("setLimits", (limits)=>{
+io.on("connection", socket => {
+
+  // WebRTC Signaling
+  socket.on("viewer-joined", () => {socket.broadcast.emit("viewer-joined");});
+  socket.on("offer", (offer) => { socket.broadcast.emit("offer", offer); });
+  socket.on("answer", (answer) => { socket.broadcast.emit("answer", answer); });
+  socket.on("ice-candidate", (candidate) => { socket.broadcast.emit("ice-candidate", candidate); });
+
+  // MQTT / Limits
+  socket.on("setLimits", (limits)=> {
     mqttClient.publish("esp32/limits", JSON.stringify(limits));
     console.log("Limits sent:", limits);
   });

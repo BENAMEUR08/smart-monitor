@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>📹 بث المزرعة</title>
+</head>
+<body>
+<h2>👤- بث مباشر</h2>
+<video id="localVideo" autoplay muted playsinline></video>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const localVideo = document.getElementById("localVideo");
+
+const pc = new RTCPeerConnection({
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+});
+
+let streamGlobal;
+
+// تشغيل الكاميرا
+navigator.mediaDevices.getUserMedia({ video:true, audio:false })
+.then(stream => {
+  localVideo.srcObject = stream;
+  streamGlobal = stream;
+  stream.getTracks().forEach(track => pc.addTrack(track, stream));
+});
+
+// استقبال answer
+socket.on("answer", answer => {
+  pc.setRemoteDescription(answer);
+});
+
+// استقبال ICE
+socket.on("ice-candidate", candidate => {
+  pc.addIceCandidate(candidate);
+});
+
+// إرسال ICE
+pc.onicecandidate = event => {
+  if(event.candidate) socket.emit("ice-candidate", event.candidate);
+};
+
+// 👇 مهم: إنشاء offer فقط عند وجود viewer
+socket.on("viewer-joined", async () => {
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit("offer", offer);
+});
+</script>
+</body>
+</html>

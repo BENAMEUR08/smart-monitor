@@ -31,6 +31,94 @@ canvas{background:white;border-radius:10px;}
 .limits-display div{display:flex;justify-content:space-between;margin:4px 0;font-size:15px;font-weight:bold;}
 .limits-input{background:#fff7e6;border:2px solid #ff9800;border-radius:12px;padding:10px;}
 .limits-title{font-weight:bold;margin-bottom:5px;font-size:16px;}
+/* ===== Camera Card ===== */
+.camera-card{
+  padding:10px;
+}
+
+/* Header */
+.camera-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  font-weight:bold;
+}
+
+/* Live Status */
+.live-indicator{
+  font-size:12px;
+  background:#ccc;
+  padding:4px 8px;
+  border-radius:10px;
+}
+
+.live-on{
+  background:red;
+  color:white;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:1;}
+  50%{opacity:0.5;}
+  100%{opacity:1;}
+}
+
+/* Video */
+.video-container{
+  position:relative;
+  width:100%;
+  height:180px;
+  background:black;
+  border-radius:15px;
+  overflow:hidden;
+}
+
+.video-container video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* Overlay */
+.video-overlay{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.6);
+}
+
+.play-btn{
+  background:#00c853;
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  color:white;
+  font-size:16px;
+}
+
+/* Controls */
+.camera-controls{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.start-btn{
+  flex:1;
+  background:#28a745;
+}
+
+.stop-btn{
+  flex:1;
+  background:#dc3545;
+}
 </style>
 </head>
 
@@ -51,7 +139,6 @@ canvas{background:white;border-radius:10px;}
 </div>
   <div class="content">
     <div id="alertBox" class="alert"></div>
-
     <div class="card">درجة الحرارة<div id="temp" class="value">--</div></div>
     <div class="card">الرطوبة<div id="hum" class="value">--</div></div>
     <div class="card">الإنارة<div id="lux" class="value">--</div></div>
@@ -81,6 +168,23 @@ canvas{background:white;border-radius:10px;}
         <button onclick="sendLimits()">إرسال الحدود</button>
       </div>
     </div>
+  <div class="card">
+
+  <div class="camera-header">
+    <span>📡 البث المباشر</span>
+    <div id="liveStatus" class="live-indicator">● غير متصل</div>
+  </div>
+
+  <div class="video-container">
+    <video id="remoteVideo" autoplay playsinline muted></video>
+  </div>
+
+  <div class="camera-controls">
+    <button onclick="startLive()" class="start-btn">▶ تشغيل</button>
+    <button onclick="stopLive()" class="stop-btn">⛔ إيقاف</button>
+  </div>
+
+</div>
   </div>
 </div>
 <script src="/script.js"></script>
