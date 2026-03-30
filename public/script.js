@@ -169,18 +169,28 @@ function startLive(){
   // إنشاء الاتصال
   pc = new RTCPeerConnection({
     iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      {
-        urls: "turn:openrelay.metered.ca:80",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      },
-      {
-        urls: "turn:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      }
-    ]
+    { urls: "stun:stun.relay.metered.ca:80" },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "6e0ed10751caa5b29fa3f324",
+      credential: "IMpasbFjZaj7Sk3D",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "6e0ed10751caa5b29fa3f324",
+      credential: "IMpasbFjZaj7Sk3D",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "6e0ed10751caa5b29fa3f324",
+      credential: "IMpasbFjZaj7Sk3D",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "6e0ed10751caa5b29fa3f324",
+      credential: "IMpasbFjZaj7Sk3D",
+    },
+  ]
   });
 
   // استقبال الفيديو
