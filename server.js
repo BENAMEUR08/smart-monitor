@@ -1,6 +1,5 @@
 // app.js
 require("dotenv").config(); // تحميل المتغيرات من .env
-
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -11,6 +10,7 @@ const User = require("./models/User");
 const mqtt = require("mqtt");
 const { Server } = require("socket.io");
 const http = require("http");
+const bcrypt = require("bcrypt");
 
 const app = express();
 const server = http.createServer(app);
@@ -94,15 +94,31 @@ app.get("/", (req,res)=>{
 // ---- Auth Routes ----
 
 // تسجيل الدخول
-app.post("/login", async (req,res)=>{
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if(!user) return res.status(401).json({ error: "Invalid credentials" });
-  const match = await user.comparePassword(password);
-  if(!match) return res.status(401).json({ error: "Invalid credentials" });
+app.post("/login", async (req, res) => {
+  const { usernameOrEmail, password } = req.body;
 
-  const token = jwt.sign({ _id:user._id, username:user.username, role:user.role }, JWT_SECRET, { expiresIn:"8h" });
-  res.cookie("token", token, { httpOnly:true, sameSite:"strict" });
+  if (!usernameOrEmail || !password) {
+    return res.status(400).json({ error: "يرجى إدخال جميع الحقول" });
+  }
+
+  // البحث عن المستخدم بواسطة اسم المستخدم أو البريد الإلكتروني
+  const user = await User.findOne({
+    $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }]
+  });
+
+  if (!user) return res.status(401).json({ error: "بيانات تسجيل غير صحيحة" });
+
+  const match = await user.comparePassword(password);
+  if (!match) return res.status(401).json({ error: "بيانات تسجيل غير صحيحة" });
+
+  // إنشاء التوكن
+  const token = jwt.sign(
+    { _id: user._id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "8h" }
+  );
+
+  res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
   res.json({ role: user.role });
 });
 
@@ -115,16 +131,37 @@ app.post("/logout", (req,res)=>{
 // ---- إدارة المستخدمين ----
 
 // إنشاء مستخدم جديد
-app.post("/create-user", protectPage("admin"), async (req,res)=>{
-  const { username, password, role } = req.body;
-  try{
-    const newUser = new User({ username,password,role });
+app.post("/create-user", protectPage("admin"), async (req, res) => {
+  const { username, email, password, role } = req.body;
+
+  // تحقق من وجود جميع الحقول
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ error: "يرجى ملء جميع الحقول" });
+  }
+
+  try {
+    // تحقق إذا البريد الإلكتروني موجود مسبقاً
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+    }
+
+    // تحقق إذا اسم المستخدم موجود مسبقاً (اختياري لأن unique موجود في الـSchema)
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
+    }
+
+    // إنشاء المستخدم (كلمة المرور ستُشفّر تلقائياً بالـpre save hook)
+    const newUser = new User({ username, email, password, role });
     await newUser.save();
-    res.json({ message:"User created" });
-  } catch(err){
+
+    res.json({ message: "تم إنشاء المستخدم بنجاح" });
+  } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 // حذف مستخدم
 app.delete("/delete-user/:id", protectPage("admin"), async (req, res) => {

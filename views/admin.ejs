@@ -13,7 +13,7 @@
 <div class="container mt-5">
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Admin Dashboard - Welcome <%= user.username %></h1>
+    <h1>Admin Dashboard - Welcome </h1>
     <button class="btn btn-danger" onclick="logout()">Logout</button>
   </div>
 
@@ -22,10 +22,13 @@
     <div class="card-header bg-primary text-white">Add New User</div>
     <div class="card-body">
       <form id="createUserForm" class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <input type="text" name="username" class="form-control" placeholder="Username" required>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+          <input type="email" name="email" class="form-control" placeholder="Email" required>
+        </div>
+        <div class="col-md-3">
           <input type="password" name="password" class="form-control" placeholder="Password" required>
         </div>
         <div class="col-md-2">
@@ -34,8 +37,8 @@
             <option value="admin">Admin</option>
           </select>
         </div>
-        <div class="col-md-2">
-          <button type="submit" class="btn btn-success w-100">Create User</button>
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-success w-100">Create</button>
         </div>
       </form>
     </div>
@@ -49,6 +52,7 @@
         <thead class="table-dark">
           <tr>
             <th>Name</th>
+            <th>Email</th>
             <th>Role</th>
             <th>Actions</th>
           </tr>
@@ -57,6 +61,7 @@
           <% users.forEach(u => { %>
           <tr>
             <td><%= u.username %></td>
+            <td><%= u.email %></td>
             <td><%= u.role %></td>
             <td>
               <button class="btn btn-warning btn-sm me-2" onclick="editUser('<%= u._id %>')">Edit</button>
@@ -77,6 +82,7 @@
     const form = e.target;
     const data = {
       username: form.username.value,
+      email: form.email.value,
       password: form.password.value,
       role: form.role.value
     };

@@ -123,7 +123,7 @@ button:hover{
 
   <div class="input-group">
     <i class="fas fa-user"></i>
-    <input id="username" type="text" placeholder="Username">
+    <input id="usernameOrEmail" type="text" placeholder="Username or Email">
   </div>
 
   <div class="input-group">
@@ -139,17 +139,22 @@ button:hover{
 
 <script>
 async function login(){
-  const username = document.getElementById("username").value;
+  const usernameOrEmail = document.getElementById("usernameOrEmail").value;
   const password = document.getElementById("password").value;
   const msg = document.getElementById("msg");
 
   msg.innerText = "";
 
+  if(!usernameOrEmail || !password){
+    msg.innerText = "Please enter all fields";
+    return;
+  }
+
   try{
     const res = await fetch("/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ usernameOrEmail, password })
     });
 
     const data = await res.json();
