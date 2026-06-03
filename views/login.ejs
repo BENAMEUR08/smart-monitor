@@ -1,178 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Smart Poultry Monitor</title>
+<title>نظام المزرعة الذكية للدواجن</title>
 
-<!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
+
+/* ===== BASE ===== */
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Segoe UI', sans-serif;
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
 }
 
 body{
-  background:#0f172a;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:#fff;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-/* Container */
+/* ===== CONTAINER ===== */
 .container{
-  width:100%;
-  max-width:380px;
-  padding:20px;
+width:100%;
+max-width:380px;
+padding:25px;
+background:rgba(255,255,255,0.04);
+backdrop-filter:blur(10px);
+border-radius:20px;
+box-shadow:0 20px 60px rgba(0,0,0,0.5);
 }
 
-/* Header */
+/* ===== HEADER ===== */
 .header{
-  text-align:center;
-  margin-bottom:40px;
+text-align:center;
+margin-bottom:35px;
 }
 
 .header i{
-  font-size:50px;
-  color:#38bdf8;
-  margin-bottom:10px;
+font-size:55px;
+color:#38bdf8;
+margin-bottom:10px;
 }
 
 .header h2{
-  font-weight:bold;
+font-size:22px;
+font-weight:bold;
+margin-bottom:5px;
 }
 
 .header p{
-  color:#94a3b8;
-  font-size:14px;
+color:#94a3b8;
+font-size:13px;
 }
 
-/* Form Inputs */
+/* ===== INPUT ===== */
 .input-group{
-  margin-bottom:20px;
-  position:relative;
+margin-bottom:18px;
+position:relative;
 }
 
 .input-group i{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  right:15px;
-  color:#94a3b8;
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+right:15px;
+color:#94a3b8;
 }
 
 input{
-  width:100%;
-  padding:14px 45px 14px 10px;
-  border:none;
-  border-radius:12px;
-  background:#1e293b;
-  color:#fff;
-  font-size:14px;
+width:100%;
+padding:14px 45px 14px 12px;
+border:none;
+border-radius:12px;
+background:#1e293b;
+color:#fff;
+font-size:14px;
+transition:.3s;
 }
 
 input:focus{
-  outline:none;
-  background:#334155;
+outline:none;
+background:#334155;
+transform:scale(1.02);
 }
 
-/* Button */
+/* ===== BUTTON ===== */
 button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  background:#38bdf8;
-  color:#000;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.3s;
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+color:#000;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+transition:.3s;
+box-shadow:0 10px 25px rgba(56,189,248,0.3);
 }
 
 button:hover{
-  background:#0ea5e9;
+transform:translateY(-2px);
+box-shadow:0 15px 30px rgba(56,189,248,0.4);
 }
 
-/* Message */
+/* ===== MESSAGE ===== */
 #msg{
-  text-align:center;
-  margin-top:15px;
-  color:#f87171;
-  font-size:14px;
+text-align:center;
+margin-top:15px;
+color:#f87171;
+font-size:14px;
+min-height:20px;
 }
+
+/* ===== SMALL ANIMATION ===== */
+.container{
+animation:fadeIn .6s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}
+
 </style>
 
 </head>
+
 <body>
 
 <div class="container">
 
-  <div class="header">
-    <i class="fas fa-drumstick-bite"></i>
-    <h2>Smart Poultry</h2>
-    <p>Poultry Farm Monitoring System</p>
-  </div>
+<!-- HEADER -->
+<div class="header">
 
-  <div class="input-group">
-    <i class="fas fa-user"></i>
-    <input id="usernameOrEmail" type="text" placeholder="Username or Email">
-  </div>
+<i class="fas fa-drumstick-bite"></i>
 
-  <div class="input-group">
-    <i class="fas fa-lock"></i>
-    <input id="password" type="password" placeholder="Password">
-  </div>
+<h2>🐔 المزرعة الذكية</h2>
 
-  <button onclick="login()">Login</button>
-
-  <p id="msg"></p>
+<p>نظام مراقبة الدواجن والتحكم الذكي</p>
 
 </div>
 
+<!-- USER -->
+<div class="input-group">
+<i class="fas fa-user"></i>
+<input id="usernameOrEmail" type="text" placeholder="اسم المستخدم أو البريد الإلكتروني">
+</div>
+
+<!-- PASSWORD -->
+<div class="input-group">
+<i class="fas fa-lock"></i>
+<input id="password" type="password" placeholder="كلمة المرور">
+</div>
+
+<!-- BUTTON -->
+<button onclick="login()">
+تسجيل الدخول
+</button>
+
+<p id="msg"></p>
+
+</div>
+
+
 <script>
+
 async function login(){
-  const usernameOrEmail = document.getElementById("usernameOrEmail").value;
-  const password = document.getElementById("password").value;
-  const msg = document.getElementById("msg");
 
-  msg.innerText = "";
+const usernameOrEmail=
+document.getElementById("usernameOrEmail").value;
 
-  if(!usernameOrEmail || !password){
-    msg.innerText = "Please enter all fields";
-    return;
-  }
+const password=
+document.getElementById("password").value;
 
-  try{
-    const res = await fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usernameOrEmail, password })
-    });
+const msg=
+document.getElementById("msg");
 
-    const data = await res.json();
+msg.innerText="";
 
-    if(res.ok){
-      if(data.role === "admin"){
-        window.location.href = "/admin";
-      }else{
-        window.location.href = "/index";
-      }
-    }else{
-      msg.innerText = data.error || "Login failed";
-    }
+if(!usernameOrEmail || !password){
 
-  }catch(err){
-    msg.innerText = "Server connection error";
-  }
+msg.innerText="⚠️ يرجى إدخال جميع الحقول";
+return;
+
 }
+
+try{
+
+const res=await fetch(
+"/login",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+usernameOrEmail,
+password
+})
+}
+);
+
+const data=await res.json();
+
+if(res.ok){
+
+setTimeout(()=>{
+
+if(data.role==="admin"){
+window.location.href="/admin";
+}else{
+window.location.href="/index";
+}
+
+},600);
+
+}else{
+
+msg.innerText=
+data.error || "❌ فشل تسجيل الدخول";
+
+}
+
+}catch(err){
+
+msg.innerText=
+"❌ خطأ في الاتصال بالخادم";
+
+}
+
+}
+
 </script>
 
 </body>

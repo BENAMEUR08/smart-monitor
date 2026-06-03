@@ -1,239 +1,50 @@
-// app.js
-require("dotenv").config(); // تحميل المتغيرات من .env
+require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const jwt = require("jsonwebtoken");
 const path = require("path");
 const cookieParser = require("cookie-parser");
-const User = require("./models/User");
-const mqtt = require("mqtt");
-const { Server } = require("socket.io");
 const http = require("http");
-const bcrypt = require("bcrypt");
-
+require("./config/db");
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = require("./sockets/socket")(server);
+require("./config/mqtt")(io);
 
-// ---- متغيرات من .env ----
-const JWT_SECRET = process.env.JWT_SECRET;
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI;
-
-// ---- اتصال MongoDB ----
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
-
-// ---- Middleware ----
+// Middleware
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieParser());
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "public")));
 
-// منع الكاش للصفحات
+app.set("view engine","ejs");
+app.set("views",path.join(__dirname,"views"));
+
+app.use(
+ express.static(
+ path.join(__dirname,"public")
+ )
+);
+
+
+// منع الكاش
 app.use((req,res,next)=>{
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  next();
-});
-
-// ---- Middleware لحماية الصفحات ----
-function protectPage(role){
-  return (req,res,next)=>{
-    const token = req.cookies.token;
-    if(!token) return res.redirect("/");
-    try{
-      const payload = jwt.verify(token, JWT_SECRET);
-      if(role && payload.role !== role) return res.status(403).send("🚫 Forbidden");
-      req.user = payload;
-      next();
-    } catch(e){
-      return res.redirect("/");
-    }
-  }
-}
-
-// ---- Routes ----
-
-// صفحة المستخدم العادي
-app.get("/index", protectPage("user"), (req,res)=>{
-  res.render("index", { user: req.user }); 
-});
-
-// صفحة الإدارة
-app.get("/admin", protectPage("admin"), async (req, res) => {
-  try {
-    const users = await User.find(); // جلب جميع المستخدمين
-    res.render("admin", { user: req.user, users });
-  } catch (err) {
-    res.status(500).send("حدث خطأ");
-  }
-});
-
-// ---- Live Camera Streaming ----
-
-// صفحة صاحب المزرعة
-app.get("/camera", (req,res)=>{
-  res.render("camera-sender", { user: req.user }); // تمرير معلومات المستخدم إذا أردت
-});
-
-// صفحة المشاهدة
-app.get("/view",protectPage("user"), (req,res)=>{
-  res.render("camera-viewer", { user: req.user });
-});
-// ---- WebRTC Signaling ----
-
-// صفحة تسجيل الدخول
-app.get("/", (req,res)=>{
-  res.render("login");
-});
-
-// ---- Auth Routes ----
-
-// تسجيل الدخول
-app.post("/login", async (req, res) => {
-  const { usernameOrEmail, password } = req.body;
-
-  if (!usernameOrEmail || !password) {
-    return res.status(400).json({ error: "يرجى إدخال جميع الحقول" });
-  }
-
-  // البحث عن المستخدم بواسطة اسم المستخدم أو البريد الإلكتروني
-  const user = await User.findOne({
-    $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }]
-  });
-
-  if (!user) return res.status(401).json({ error: "بيانات تسجيل غير صحيحة" });
-
-  const match = await user.comparePassword(password);
-  if (!match) return res.status(401).json({ error: "بيانات تسجيل غير صحيحة" });
-
-  // إنشاء التوكن
-  const token = jwt.sign(
-    { _id: user._id, username: user.username, role: user.role },
-    JWT_SECRET,
-    { expiresIn: "8h" }
-  );
-
-  res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
-  res.json({ role: user.role });
-});
-
-// تسجيل الخروج
-app.post("/logout", (req,res)=>{
-  res.clearCookie("token", { httpOnly:true, sameSite:"strict" });
-  res.json({ message: "Logged out" });
-});
-
-// ---- إدارة المستخدمين ----
-
-// إنشاء مستخدم جديد
-app.post("/create-user", protectPage("admin"), async (req, res) => {
-  const { username, email, password, role } = req.body;
-
-  // تحقق من وجود جميع الحقول
-  if (!username || !email || !password || !role) {
-    return res.status(400).json({ error: "يرجى ملء جميع الحقول" });
-  }
-
-  try {
-    // تحقق إذا البريد الإلكتروني موجود مسبقاً
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
-    }
-
-    // تحقق إذا اسم المستخدم موجود مسبقاً (اختياري لأن unique موجود في الـSchema)
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) {
-      return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
-    }
-
-    // إنشاء المستخدم (كلمة المرور ستُشفّر تلقائياً بالـpre save hook)
-    const newUser = new User({ username, email, password, role });
-    await newUser.save();
-
-    res.json({ message: "تم إنشاء المستخدم بنجاح" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+res.setHeader(
+"Cache-Control",
+"no-store, no-cache, must-revalidate, private"
+);
+next();
 });
 
 
-// حذف مستخدم
-app.delete("/delete-user/:id", protectPage("admin"), async (req, res) => {
-  try {
-    const userId = req.params.id;
+// Routes
+app.use("/",require("./routes/authRoutes"));
+app.use("/",require("./routes/pageRoutes"));
+app.use("/",require("./routes/adminRoutes"));
+app.use("/",require("./routes/aiRoutes"));
+app.use("/",require("./routes/archiveRoutes"));
 
-    // منع المدير من حذف نفسه
-    if (req.user._id === userId) {
-      return res.status(400).json({ error: "🚫 لا يمكنك حذف نفسك" });
-    }
 
-    await User.findByIdAndDelete(userId);
-    res.json({ message: "تم الحذف بنجاح" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const PORT=process.env.PORT ||3000;
+
+server.listen(PORT,()=>{
+console.log(`Server running on http://localhost:${PORT}`);
 });
-
-// تعديل مستخدم (تغيير الدور)
-app.put("/edit-user/:id", protectPage("admin"), async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const { role } = req.body;
-
-    // التحقق من صحة الدور
-    if (!["user", "admin"].includes(role)) {
-      return res.status(400).json({ error: "🚫 دور غير صحيح" });
-    }
-
-    // منع المدير من تعديل دوره الخاص بنفسه
-    if (req.user._id === userId) {
-      return res.status(400).json({ error: "🚫 لا يمكنك تعديل دورك" });
-    }
-
-    await User.findByIdAndUpdate(userId, { role });
-    res.json({ message: "تم التعديل بنجاح" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ---- MQTT ----
-const mqttClient = mqtt.connect(process.env.MQTT_URL, {
-  username: process.env.MQTT_USERNAME,
-  password: process.env.MQTT_PASSWORD
-});
-
-mqttClient.on("connect", () => {
-  console.log("✅ Connected to HiveMQ");
-  mqttClient.subscribe("esp32/sensors");
-});
-
-mqttClient.on("message", (topic,message)=>{
-  const data = JSON.parse(message.toString());
-  io.emit("sensorData", data); // إرسال البيانات لجميع المتصفحات المتصلة
-});
-
-// ---- Socket.io ----
-io.on("connection", socket => {
-
-  // WebRTC Signaling
-  socket.on("viewer-joined", () => {socket.broadcast.emit("viewer-joined");});
-  socket.on("offer", (offer) => { socket.broadcast.emit("offer", offer); });
-  socket.on("answer", (answer) => { socket.broadcast.emit("answer", answer); });
-  socket.on("ice-candidate", (candidate) => { socket.broadcast.emit("ice-candidate", candidate); });
-
-  // MQTT / Limits
-  socket.on("setLimits", (limits)=> {
-    mqttClient.publish("esp32/limits", JSON.stringify(limits));
-    console.log("Limits sent:", limits);
-  });
-});
-
-// ---- تشغيل السيرفر ----
-server.listen(PORT, ()=>console.log(`Server running on http://localhost:${PORT}`));

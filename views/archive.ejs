@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>📊 Smart Farm Archive</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+/* ===== GLOBAL ===== */
+body{
+margin:0;
+font-family:system-ui;
+background:linear-gradient(135deg,#0f172a,#020617);
+color:white;
+}
+
+/* ===== HEADER ===== */
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:rgba(15,23,42,0.8);
+backdrop-filter:blur(10px);
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.title{
+font-size:18px;
+font-weight:bold;
+}
+
+.btn{
+background:#3b82f6;
+border:none;
+padding:8px 14px;
+border-radius:10px;
+color:white;
+cursor:pointer;
+}
+
+/* ===== CONTAINER ===== */
+.container{
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+/* ===== KPI ===== */
+.kpis{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:12px;
+}
+
+.card{
+background:rgba(17,24,39,0.8);
+padding:15px;
+border-radius:15px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+.value{
+font-size:22px;
+margin-top:8px;
+}
+
+/* ===== STATUS COLORS ===== */
+.on{color:#22c55e;}
+.off{color:#ef4444;}
+
+/* ===== FILTER ===== */
+.filter{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+input{
+padding:8px;
+border-radius:8px;
+border:none;
+}
+
+/* ===== CHART ===== */
+.chart{
+background:#111827;
+padding:10px;
+border-radius:15px;
+height:280px;
+}
+
+/* ===== TABLE ===== */
+.table{
+background:#111827;
+border-radius:15px;
+overflow:auto;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+text-align:center;
+font-size:14px;
+}
+
+th{
+background:#1f2937;
+}
+
+tr:hover{
+background:#1e293b;
+}
+
+button{
+  background:#ef4444;
+  border:none;
+  padding:8px 12px;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
+  margin:10px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="goHome()">⬅ رجوع</button>
+<div class="title">📊 أرشيف المزرعة</div>
+<button class="btn" onclick="downloadCSV()">CSV</button>
+</div>
+
+<div class="container">
+
+<!-- FILTER -->
+<div class="filter">
+<input type="date" id="start">
+<input type="date" id="end">
+<button class="btn" onclick="filter()">فلترة</button>
+</div>
+
+<!-- KPI -->
+<div class="kpis">
+
+<div class="card">
+🌡 الحرارة
+<div id="avgTemp" class="value">--</div>
+</div>
+
+<div class="card">
+💧 الرطوبة
+<div id="avgHum" class="value">--</div>
+</div>
+
+<div class="card">
+🌬 الشفط
+<div id="exhaust" class="value">--</div>
+</div>
+
+<div class="card">
+🔥 الحريق
+<div id="fire" class="value">--</div>
+</div>
+
+</div>
+
+<!-- CHART -->
+<div class="chart">
+<canvas id="chart"></canvas>
+</div>
+
+<!-- TABLE -->
+<div class="table">
+<table id="table">
+<tr>
+<th>🌡</th>
+<th>💧</th>
+<th>🌀</th>
+<th>🔥</th>
+<th>💦</th>
+<th>🌬</th>
+<th>📅</th>
+</tr>
+</table>
+</div>
+
+</div>
+
+<script>
+
+let dataAll=[];
+let chart;
+
+// ===== LOAD =====
+fetch("/api/archive")
+.then(r=>r.json())
+.then(data=>{
+  dataAll=data;
+  render(data);
+});
+
+// ===== RENDER =====
+function render(data){
+
+  const temps=data.map(x=>x.temperature);
+  const hums=data.map(x=>x.humidity);
+
+  const avg = arr => arr.length ?
+  (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : "--";
+
+  document.getElementById("avgTemp").innerText=avg(temps);
+  document.getElementById("avgHum").innerText=avg(hums);
+
+  // آخر حالة
+  const last=data[data.length-1];
+
+  if(last){
+    document.getElementById("exhaust").innerHTML =
+      last.exhaustFan ? "<span class='on'>ON</span>" : "<span class='off'>OFF</span>";
+
+    document.getElementById("fire").innerHTML =
+      last.fire ? "<span class='off'>🔥</span>" : "<span class='on'>OK</span>";
+  }
+
+  // TABLE
+  const table=document.getElementById("table");
+  table.innerHTML=`
+  <tr>
+    <th>🌡</th>
+    <th>💧</th>
+    <th>🌀</th>
+    <th>🔥</th>
+    <th>💦</th>
+    <th>🌬</th>
+    <th>📅</th>
+  </tr>`;
+
+  data.forEach(x=>{
+    table.innerHTML+=`
+    <tr>
+      <td>${x.temperature}</td>
+      <td>${x.humidity}</td>
+      <td>${x.fan?"ON":"OFF"}</td>
+      <td>${x.fire?"🔥":"OK"}</td>
+      <td>${x.water?"ON":"OFF"}</td>
+      <td>${x.exhaustFan?"ON":"OFF"}</td>
+      <td>${new Date(x.createdAt).toLocaleString()}</td>
+    </tr>`;
+  });
+
+  // CHART
+  const labels=data.map(x=>new Date(x.createdAt).toLocaleTimeString());
+
+  if(chart) chart.destroy();
+
+  chart=new Chart(document.getElementById("chart"),{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        {
+          label:"Temp",
+          data:temps,
+          borderColor:"#ef4444",
+          tension:.4
+        },
+        {
+          label:"Hum",
+          data:hums,
+          borderColor:"#3b82f6",
+          tension:.4
+        }
+      ]
+    },
+    options:{
+      plugins:{legend:{labels:{color:"white"}}},
+      scales:{
+        x:{ticks:{color:"white"}},
+        y:{ticks:{color:"white"}}
+      }
+    }
+  });
+}
+
+// ===== FILTER =====
+function filter(){
+  const s=new Date(document.getElementById("start").value);
+  const e=new Date(document.getElementById("end").value);
+
+  const f=dataAll.filter(x=>{
+    const d=new Date(x.createdAt);
+    return (!s||d>=s)&&(!e||d<=e);
+  });
+
+  render(f);
+}
+
+// ===== CSV =====
+function downloadCSV(){
+  let csv="temp,hum,fan,fire,water,exhaust,date\n";
+
+  dataAll.forEach(x=>{
+    csv+=`${x.temperature},${x.humidity},${x.fan},${x.fire},${x.water},${x.exhaustFan},${x.createdAt}\n`;
+  });
+
+  const blob=new Blob([csv]);
+  const url=URL.createObjectURL(blob);
+
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="farm.csv";
+  a.click();
+}
+function goHome(){
+  window.location.href = "/index"; // أو "/"
+}
+</script>
+
+</body>
+</html>

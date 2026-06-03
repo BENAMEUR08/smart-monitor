@@ -3,190 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Monitor Pro</title>
 
-<!-- Socket.io -->
+<title>🐔 Smart Farm Dashboard</title>
+
 <script src="/socket.io/socket.io.js"></script>
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI', Arial;}
-body{background:linear-gradient(135deg,#1e3c72,#2a5298);display:flex;justify-content:center;align-items:center;height:100vh;}
-.app{width:380px;height:680px;background:#f4f6f9;border-radius:30px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.5);display:flex;flex-direction:column;}
-.header{background:linear-gradient(135deg,#007bff,#00c6ff);color:white;padding:20px;text-align:center;font-size:22px;font-weight:bold;}
-.content{flex:1;padding:15px;overflow-y:auto;}
-.card{background:white;padding:15px;margin-bottom:12px;border-radius:15px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-.value{font-size:22px;font-weight:bold;margin-top:5px;}
-.status{font-size:18px;font-weight:bold;}
-.fire-on{background:red;color:white;padding:10px;border-radius:10px;}
-.fire-off{background:green;color:white;padding:10px;border-radius:10px;}
-.water-on{background:#0099ff;color:white;padding:10px;border-radius:10px;}
-.water-off{background:gray;color:white;padding:10px;border-radius:10px;}
-.alert{padding:10px;background:red;color:white;border-radius:10px;margin-bottom:10px;display:none;}
-input{width:70px;padding:5px;margin:3px;text-align:center;border-radius:5px;border:1px solid #ccc;}
-button{width:100%;padding:10px;border:none;border-radius:10px;background:#007bff;color:white;font-size:16px;margin-top:10px;cursor:pointer;}
-canvas{background:white;border-radius:10px;}
-.limits-display{background:#eef3ff;border:2px solid #007bff;border-radius:12px;padding:10px;margin-bottom:10px;}
-.limits-display div{display:flex;justify-content:space-between;margin:4px 0;font-size:15px;font-weight:bold;}
-.limits-input{background:#fff7e6;border:2px solid #ff9800;border-radius:12px;padding:10px;}
-.limits-title{font-weight:bold;margin-bottom:5px;font-size:16px;}
-/* ===== Camera Card ===== */
-.camera-card{
-  padding:10px;
-}
-
-/* Header */
-.camera-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-  font-weight:bold;
-}
-
-/* Live Status */
-.live-indicator{
-  font-size:12px;
-  background:#ccc;
-  padding:4px 8px;
-  border-radius:10px;
-}
-
-.live-on{
-  background:red;
-  color:white;
-  animation:pulse 1s infinite;
-}
-
-@keyframes pulse{
-  0%{opacity:1;}
-  50%{opacity:0.5;}
-  100%{opacity:1;}
-}
-
-/* Video */
-.video-container{
-  position:relative;
-  width:100%;
-  height:180px;
-  background:black;
-  border-radius:15px;
-  overflow:hidden;
-}
-
-.video-container video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* Overlay */
-.video-overlay{
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,0.6);
-}
-
-.play-btn{
-  background:#00c853;
-  padding:12px 20px;
-  border:none;
-  border-radius:10px;
-  color:white;
-  font-size:16px;
-}
-
-/* Controls */
-.camera-controls{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-}
-
-.start-btn{
-  flex:1;
-  background:#28a745;
-}
-
-.stop-btn{
-  flex:1;
-  background:#dc3545;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<div class="app">
-  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-  <button onclick="logout()" style="
-    padding:6px 12px;
-    border:none;
-    border-radius:8px;
-    background:#ff4d4d;
-    color:white;
-    cursor:pointer;
-    font-size:14px;
-  ">
-    خروج
-  </button>
-</div>
-  <div class="content">
-    <div id="alertBox" class="alert"></div>
-    <div class="card">درجة الحرارة<div id="temp" class="value">--</div></div>
-    <div class="card">الرطوبة<div id="hum" class="value">--</div></div>
-    <div class="card">الإنارة<div id="lux" class="value">--</div></div>
-    <div class="card">المروحة<div id="fan" class="status">--</div></div>
-    <div class="card">السخان<div id="heater" class="status">--</div></div>
-    <div class="card">الحريق<div id="fire" class="fire-off">--</div></div>
-    <div class="card">مرشة الماء<div id="water" class="water-off">--</div></div>
 
-    <div class="card">📊 الرسم البياني<canvas id="chart"></canvas></div>
+<header>
+  <h3>🐔 المزرعة الذكية</h3>
+  <button onclick="logout()">تسجيل الخروج</button>
+</header>
+
+<div id="alertBox"></div>
+
+<!-- ================= MENU ================= -->
+<div id="menu" class="menu">
+  
+  <div class="icon-card" onclick="openPage('sensors')">
+    <div class="icon">🌡️</div>
+    <div class="title">الحساسات</div>
+    <div class="sub">مراقبة الحرارة والرطوبة</div>
+  </div>
+
+  <div class="icon-card" onclick="openPage('limits')">
+    <div class="icon">⚙️</div>
+    <div class="title">الحدود</div>
+    <div class="sub">إعدادات النظام</div>
+  </div>
+
+  <div class="icon-card" onclick="openPage('chart')">
+    <div class="icon">📊</div>
+    <div class="title">الرسم البياني</div>
+    <div class="sub">تحليل البيانات</div>
+  </div>
+
+  <div class="icon-card live" onclick="goLive()">
+    <div class="icon">📡</div>
+    <div class="title">البث المباشر</div>
+    <div class="sub">مشاهدة الكاميرا</div>
+    <span class="pulse"></span>
+  </div>
+  
+  <div class="icon-card" onclick="openPage('health')">
+  <div class="icon">🧠</div>
+  <div class="title">الحالة الصحية</div>
+  <div class="sub">تحليل الدجاج بالذكاء الاصطناعي</div>
+  </div>
+
+  <div class="icon-card archive"
+onclick="goArchive()">
+
+<div class="icon">
+📊
+</div>
+
+<div class="title">
+الأرشيف
+</div>
+
+<div class="sub">
+سجل الحساسات
+</div>
+
+<span class="pulse"></span>
+
+</div>
+</div>
+<!-- ================= SENSORS ================= -->
+
+<!-- ================= HEALTH AI ================= -->
+<div id="health" class="section">
+
+  <button onclick="backHome()">⬅ رجوع</button>
+
+  <div class="container">
+
+    <!-- رفع الصورة -->
+    <div class="card">
+      <h3>📤 رفع صورة</h3>
+      <input type="file" id="imageInput" accept="image/*">
+      <button onclick="sendImage()">تحليل</button>
+    </div>
+
+    <!-- عرض الصورة -->
+    <div class="card">
+      <h3>🖼️ الصورة</h3>
+      <img id="preview" style="width:100%; border-radius:10px;">
+    </div>
+
+    <!-- النتيجة -->
+    <div class="card result-card">
+      <h3>📊 النتيجة</h3>
+      <p id="healthStatus">---</p>
+      <p id="healthConfidence"></p>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="sensors" class="section">
+
+  <button onclick="backHome()">⬅ رجوع</button>
+
+  <div class="container">
+    <div class="card">🌡 الجرارة <p id="temp">--</p></div>
+    <div class="card">💧 الرطوبة <p id="hum">--</p></div>
+    <div class="card">🌀 المروحة <p id="fan">--</p></div>
+    <div class="card">🌬️ التهوية <p id="exhaustFan">--</p></div>
+    <div class="card">🔥 السخان <p id="heater">--</p></div>
+    <div class="card">🔥 النار <p id="fire">--</p></div>
+    <div class="card">💦مرشة الحريق<p id="water">--</p></div>
+  </div>
+
+</div>
+
+<!-- ================= LIMITS ================= -->
+<div id="limits" class="section">
+
+  <button onclick="backHome()">⬅ رجوع</button>
+
+  <!-- ===== Limits Display Cards ===== -->
+  <div class="container">
 
     <div class="card">
-      <div class="limits-title">📊 الحدود الحالية</div>
-      <div class="limits-display">
-        <div><span>🌡 الحرارة</span><span id="tempLimits">--</span></div>
-        <div><span>💧 الرطوبة</span><span id="humLimits">--</span></div>
-        <div><span>💡 الإنارة</span><span id="luxLimits">--</span></div>
-      </div>
-
-      <div class="limits-title">⚙️ إدخال حدود جديدة</div>
-      <div class="limits-input">
-        حرارة Min <input id="tempMin" type="number" value="21">
-        حرارة Max <input id="tempMax" type="number" value="28"><br>
-        رطوبة Min <input id="humMin" type="number" value="40">
-        رطوبة Max <input id="humMax" type="number" value="70"><br>
-        Lux Min <input id="luxMin" type="number" value="15">
-        Lux Max <input id="luxMax" type="number" value="120"><br>
-        <button onclick="sendLimits()">إرسال الحدود</button>
-      </div>
+      🌡️ حدود الحرارة
+      <p id="tempLimits">--</p>
     </div>
-  <div class="card">
-
-  <div class="camera-header">
-    <span>📡 البث المباشر</span>
-    <div id="liveStatus" class="live-indicator">● غير متصل</div>
+    <div class="card">
+      💧 حدود الرطوبة
+      <p id="humMaxDisplay">--</p>
+    </div>
+    
   </div>
 
-  <div class="video-container">
-    <video id="remoteVideo" autoplay playsinline muted controls></video>
-  </div>
+  <hr style="margin:20px 0; opacity:0.2;">
 
-  <div class="camera-controls">
-    <button onclick="startLive()" class="start-btn">▶ تشغيل</button>
-    <button onclick="stopLive()" class="stop-btn">⛔ إيقاف</button>
+  <!-- ===== Inputs ===== -->
+  <div class="container">
+    <div class="card">الحد الأدنى للحرارة <input id="tempMin"></div>
+    <div class="card">الحد الأقصى للحرارة <input id="tempMax"></div>
+    <div class="card">الحد الأقصى للرطوبة <input id="humMax"></div>
+  </div>
+  <button class="save-btn" onclick="sendLimits()">💾 حفظ</button>
+
+</div>
+
+<!-- ================= CHART ================= -->
+<div id="chart" class="section">
+
+  <button onclick="backHome()">⬅ رجوع</button>
+
+  <div class="chart-box">
+    <canvas id="chartCanvas"></canvas>
   </div>
 
 </div>
-  </div>
-</div>
-<script src="/script.js"></script>
+
+<script src="app.js"></script>
+
 </body>
 </html>
